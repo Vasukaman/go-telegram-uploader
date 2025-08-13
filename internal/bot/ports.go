@@ -9,3 +9,12 @@ type Messenger interface {
 	Send(c tgbotapi.Chattable) (tgbotapi.Message, error)
 	GetFileDirectURL(fileID string) (string, error)
 }
+
+type MessageStore interface {
+	SaveMessage(message string)
+	GetMessage() (messaage string)
+}
+
+type ImageUploader interface {
+	UploadImage(imageData []byte) (string, error)
+}

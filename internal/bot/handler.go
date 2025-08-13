@@ -11,40 +11,34 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type ImageUploader interface {
-	UploadImage(imageData []byte) (string, error)
-}
-
 // MessageHandler handles the logic for incoming messages.
 type MessageHandler struct {
 	messenger Messenger
-	store     MessageStore
 	uploader  ImageUploader
 }
 
 // NewMessageHandler creates a new handler.
-func NewMessageHandler(messenger Messenger, store MessageStore, uploader ImageUploader) *MessageHandler {
-	return &MessageHandler{messenger: messenger, store: store, uploader: uploader}
+func NewMessageHandler(messenger Messenger, uploader ImageUploader) *MessageHandler {
+	return &MessageHandler{messenger: messenger, uploader: uploader}
 }
 
 // Handle takes an incoming message and routes it to the correct logic.
 func (h *MessageHandler) Handle(message *tgbotapi.Message) {
-	log.Printf("Received: [%s] %s", message.From.UserName, message.Text)
+	// Log everything for debugging
+	log.Printf("Received: [%s] Caption: [%s] Text: [%s]", message.From.UserName, message.Caption, message.Text)
 
-	// Command routing
-	switch {
-	case message.Caption == "/upload": //If it's true, then we definetly have file attached AND command is correct. Mb not the cleanest way to do this, but i will keep it
+	// --- Step 1: Check for any media ---
+	if message.Photo != nil || message.Animation != nil || message.Document != nil {
 		h.handleMediaUpload(message)
-	case message.Text == "/upload":
-		h.sendMessage(tgbotapi.NewMessage(message.Chat.ID, "To use this command, please send a photo or GIF with '/upload' as the caption."))
-	case strings.HasPrefix(message.Text, "/test"):
-		h.handleTestCommand(message)
-	case strings.HasPrefix(message.Text, "/secret"):
-		h.handleSecretCommand(message)
-	default:
-		h.handleUnknownCommand(message)
+		return // We're done
 	}
 
+	// --- Step 2: If no media, handle the /test command or give help ---
+	if strings.HasPrefix(message.Text, "/test") {
+		h.handleTestCommand(message)
+	} else {
+		h.sendMessage(tgbotapi.NewMessage(message.Chat.ID, "Hello! Send me a photo, GIF, or document, and I will upload it for you."))
+	}
 }
 
 // handleMediaUpload figures out what kind of media was sent and gets the FileID.
@@ -108,25 +102,6 @@ func (h *MessageHandler) handleTestCommand(message *tgbotapi.Message) {
 	replyText := fmt.Sprintf("Test successful! Your random number is: %d", randomNumber)
 
 	reply := tgbotapi.NewMessage(message.Chat.ID, replyText)
-	h.sendMessage(reply)
-}
-
-func (h *MessageHandler) handleSecretCommand(message *tgbotapi.Message) {
-
-	newSecretMessage := strings.TrimSpace(strings.TrimPrefix(message.Text, "/secret"))
-	hiddenMessage := h.store.GetMessage()
-
-	replyText := fmt.Sprintf(`You unravel a secret message. It says:
-	%s`, hiddenMessage)
-
-	h.store.SaveMessage(newSecretMessage)
-	reply := tgbotapi.NewMessage(message.Chat.ID, replyText)
-	h.sendMessage(reply)
-}
-
-// handleUnknownCommand replies to any command that is not recognized.
-func (h *MessageHandler) handleUnknownCommand(message *tgbotapi.Message) {
-	reply := tgbotapi.NewMessage(message.Chat.ID, "Unknown command. Try /test.")
 	h.sendMessage(reply)
 }
 

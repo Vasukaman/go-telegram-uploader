@@ -1,11 +1,11 @@
 package main
 
 import (
-	"imgur-bot/internal/adapters/cloudinary"
-	"imgur-bot/internal/bot" // Import our new bot package
-	"imgur-bot/internal/config"
 	"log"
 
+	"github.com/Vasukaman/go-telegram-uploader/internal/adapters/cloudinary"
+	"github.com/Vasukaman/go-telegram-uploader/internal/bot" // Import our new bot package
+	"github.com/Vasukaman/go-telegram-uploader/internal/config"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
@@ -51,10 +51,9 @@ func main() {
 		log.Panicf("Failed to connect to Cloudinary: %v", err)
 	}
 
-	messageStore := bot.NewInMemoryMessageStore()
 	// 2. Create our message handler (the "business logic").
 	//    We pass it the API client so it can send replies.
-	messageHandler := bot.NewMessageHandler(telegramAdapter, messageStore, cloudinaryClient)
+	messageHandler := bot.NewMessageHandler(telegramAdapter, cloudinaryClient)
 
 	//imageUploadTest(cloudinaryClient)
 

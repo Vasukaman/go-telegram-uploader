@@ -1,8 +1,9 @@
 package bot
 
 import (
-	"imgur-bot/internal/adapters/cloudinary"
 	"log"
+
+	"github.com/Vasukaman/go-telegram-uploader/internal/adapters/cloudinary"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -31,12 +32,11 @@ func (b *Bot) Start() {
 
 	// This is the main loop for receiving and handling updates.
 	for update := range updates {
-		// We only care about messages for now.
+		// We only care about messages
 		if update.Message == nil {
 			continue
 		}
 
-		// Pass the message to the handler to decide what to do.
 		b.handler.Handle(update.Message)
 	}
 }
